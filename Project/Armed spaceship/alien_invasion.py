@@ -7,6 +7,8 @@ from settings import Settings
 from ship import Ship
 from bullet import Bullet
 
+from alien import Alien
+
 
 class AlienInvasion:
     """ 管理游戏资源和行为的类 """
@@ -27,6 +29,49 @@ class AlienInvasion:
 
         self.ship = Ship(self)
         self.bullets = pygame.sprite.Group()
+        self.aliens = pygame.sprite.Group()
+
+        self._create_fleet()
+
+
+    def _create_fleet(self):
+        """ 创建外星人群。 """
+        # 创建一个外星人。这个外星人不是外星人群的成员，因此没有将其加入编组aliens中。
+        # 它是用来为放置外星人，需要知道外星人的宽度和高度，因此在执行计算前，创建一个外星人。
+        alien = Alien(self)
+        # 使用了属性size。该属性是一个元组，包含rect对象的宽度和长度
+        alien_width, alien_height = alien.rect.size
+        available_space_x = self.settings.screen_width - (2 * alien_width)
+        number_aliens_x = available_space_x // (2 * alien_width)
+
+        # 计算屏幕可容纳多少行外星人
+        ship_height = self.ship.rect.height
+        available_space_y = (self.settings.screen_height - (3 * alien_height) - ship_height)
+        number_rows = available_space_y // (2 * alien_height)
+
+        # 创建外星人群
+        for row_number in range(number_rows):
+            for alien_number in range(number_aliens_x):
+                self._create_alien(alien_number, row_number)
+
+        # 创建第一行外星人
+        # for alien_number in range(number_aliens_x):
+        #     self._create_alien(alien_number)
+
+
+    # 接收一个参数，即要创建的外星人的编号
+    def _create_alien(self, alien_number, row_number):
+        # 创建一个外星人并将其加入当前行。
+        alien = Alien(self)
+        alien_width, alien.height = alien.rect.size
+        # 在内部获取外星人的宽度，而不是将其作为参数传入
+        alien.x = alien_width + 2 * alien_width * alien_number
+        alien.rect.x = alien.x
+        alien.rect.y = alien.rect.height + 2 * alien.rect.height * row_number
+        self.aliens.add(alien)
+
+
+        
 
 
     def run_game(self):
@@ -99,6 +144,8 @@ class AlienInvasion:
         self.ship.blitme()
         for bullet in self.bullets.sprites():
             bullet.draw_bullet()
+        # 对编组调用draw()时，Pygame将把编组中的每个元素绘制到属性rect指定位置
+        self.aliens.draw(self.screen)
 
         # 让最近绘制的屏幕可见。
         pygame.display.flip()
